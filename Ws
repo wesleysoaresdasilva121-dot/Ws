@@ -1,0 +1,289 @@
+-- Noob Hub — Interface + Funções Combinadas
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+-- ==================== GUI NOOB HUB STYLE ====================
+local gui = Instance.new("ScreenGui")
+gui.Name = "NoobHub"
+gui.ResetOnSpawn = false
+gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0,260,0,340)
+frame.Position = UDim2.new(0.05,0,0.5,-170)
+frame.BackgroundColor3 = Color3.fromRGB(18,18,18)
+frame.BorderSizePixel = 0
+frame.Parent = gui
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,16)
+
+local stroke = Instance.new("UIStroke", frame)
+stroke.Color = Color3.fromRGB(255,40,40)
+stroke.Thickness = 2
+
+local top = Instance.new("Frame")
+top.Size = UDim2.new(1,0,0,42)
+top.BackgroundColor3 = Color3.fromRGB(28,28,28)
+top.BorderSizePixel = 0
+top.Parent = frame
+Instance.new("UICorner", top).CornerRadius = UDim.new(0,16)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,-80,1,0)
+title.Position = UDim2.new(0,12,0,0)
+title.BackgroundTransparency = 1
+title.Text = "NOOB HUB"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 20
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = top
+
+local min = Instance.new("TextButton")
+min.Size = UDim2.new(0,28,0,28)
+min.Position = UDim2.new(1,-70,0.5,-14)
+min.Text = "—"
+min.Font = Enum.Font.GothamBold
+min.TextSize = 20
+min.BackgroundColor3 = Color3.fromRGB(45,45,45)
+min.TextColor3 = Color3.new(1,1,1)
+min.Parent = top
+Instance.new("UICorner", min).CornerRadius = UDim.new(1,0)
+
+local close = Instance.new("TextButton")
+close.Size = UDim2.new(0,28,0,28)
+close.Position = UDim2.new(1,-36,0.5,-14)
+close.Text = "X"
+close.Font = Enum.Font.GothamBold
+close.TextSize = 18
+close.BackgroundColor3 = Color3.fromRGB(180,30,30)
+close.TextColor3 = Color3.new(1,1,1)
+close.Parent = top
+Instance.new("UICorner", close).CornerRadius = UDim.new(1,0)
+
+local holder = Instance.new("Frame")
+holder.Size = UDim2.new(1,-16,1,-54)
+holder.Position = UDim2.new(0,8,0,46)
+holder.BackgroundTransparency = 1
+holder.Parent = frame
+
+local list = Instance.new("UIListLayout")
+list.Padding = UDim.new(0,8)
+list.Parent = holder
+
+local function criarBotao(texto)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(1,0,0,42)
+	b.Text = texto
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 15
+	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	b.TextColor3 = Color3.new(1,1,1)
+	b.BorderSizePixel = 0
+	b.Parent = holder
+
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
+
+	local s = Instance.new("UIStroke", b)
+	s.Color = Color3.fromRGB(255,40,40)
+	s.Thickness = 1
+
+	return b
+end
+
+local espBtn = criarBotao("ESP: OFF")
+local invisBtn = criarBotao("INVISÍVEL: OFF")
+local autoBtn = criarBotao("AUTO CLIQUE: OFF")
+local autoEquipBtn = criarBotao("AUTO EQUIP LONGSWORD: OFF")
+local followBtn = criarBotao("SEGUIR RED KNIGHT: OFF")
+
+-- Arrastar Janela
+local dragging, dragStart, startPos
+
+top.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+	or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+	or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(
+			startPos.X.Scale, startPos.X.Offset + delta.X,
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+UIS.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+	or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
+end)
+
+-- Minimizar / Fechar
+local minimizado = false
+min.MouseButton1Click:Connect(function()
+	minimizado = not minimizado
+	holder.Visible = not minimizado
+	frame.Size = minimizado and UDim2.new(0,260,0,42) or UDim2.new(0,260,0,340)
+end)
+
+close.MouseButton1Click:Connect(function()
+	gui:Destroy()
+end)
+
+-- ==================== FUNÇÕES ====================
+local espOn = false
+local invisOn = false
+local autoOn = false
+local autoEquipOn = false
+local followOn = false
+local followConn
+
+-- ESP
+local function atualizarESP()
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer and plr.Character then
+			local h = plr.Character:FindFirstChild("TesteHighlight")
+			if espOn then
+				if not h then
+					h = Instance.new("Highlight")
+					h.Name = "TesteHighlight"
+					h.FillColor = Color3.fromRGB(255, 0, 0)
+					h.OutlineColor = Color3.new(1, 1, 1)
+					h.Parent = plr.Character
+				end
+			elseif h then
+				h:Destroy()
+			end
+		end
+	end
+end
+
+Players.PlayerAdded:Connect(function(plr)
+	plr.CharacterAdded:Connect(function()
+		task.wait(0.5)
+		atualizarESP()
+	end)
+end)
+
+espBtn.MouseButton1Click:Connect(function()
+	espOn = not espOn
+	espBtn.Text = espOn and "ESP: ON" or "ESP: OFF"
+	atualizarESP()
+end)
+
+-- Invisibilidade
+local function atualizarInvis()
+	local char = LocalPlayer.Character
+	if not char then return end
+	for _, obj in ipairs(char:GetDescendants()) do
+		if obj:IsA("BasePart") then
+			obj.LocalTransparencyModifier = invisOn and 1 or 0
+		end
+	end
+end
+
+LocalPlayer.CharacterAdded:Connect(function()
+	task.wait(0.5)
+	atualizarInvis()
+end)
+
+invisBtn.MouseButton1Click:Connect(function()
+	invisOn = not invisOn
+	invisBtn.Text = invisOn and "INVISÍVEL: ON" or "INVISÍVEL: OFF"
+	atualizarInvis()
+end)
+
+-- Auto Clique
+task.spawn(function()
+	while true do
+		task.wait(0.05)
+		if autoOn then
+			local char = LocalPlayer.Character
+			if char then
+				local tool = char:FindFirstChildOfClass("Tool")
+				if tool then
+					tool:Activate()
+				end
+			end
+		end
+	end
+end)
+
+autoBtn.MouseButton1Click:Connect(function()
+	autoOn = not autoOn
+	autoBtn.Text = autoOn and "AUTO CLIQUE: ON" or "AUTO CLIQUE: OFF"
+end)
+
+-- Auto Equipar LongSword
+RunService.RenderStepped:Connect(function()
+	if autoEquipOn then
+		local character = LocalPlayer.Character
+		if character and not character:FindFirstChild("LongSword") then
+			local tool = LocalPlayer.Backpack:FindFirstChild("LongSword")
+			if tool then
+				tool.Parent = character
+			end
+		end
+	end
+end)
+
+autoEquipBtn.MouseButton1Click:Connect(function()
+	autoEquipOn = not autoEquipOn
+	autoEquipBtn.Text = autoEquipOn and "AUTO EQUIP LONGSWORD: ON" or "AUTO EQUIP LONGSWORD: OFF"
+end)
+
+-- Seguir Red Knight — VOAR AO LADO
+local function acharNPC()
+	for _, m in ipairs(workspace:GetDescendants()) do
+		if m:IsA("Model")
+			and m.Name == "Red Knight"
+			and m:FindFirstChild("Humanoid")
+			and m:FindFirstChild("HumanoidRootPart") then
+			return m
+		end
+	end
+	return nil
+end
+
+followBtn.MouseButton1Click:Connect(function()
+	followOn = not followOn
+	followBtn.Text = followOn and "SEGUIR RED KNIGHT: ON" or "SEGUIR RED KNIGHT: OFF"
+
+	if followConn then
+		followConn:Disconnect()
+		followConn = nil
+	end
+
+	if followOn then
+		followConn = RunService.RenderStepped:Connect(function()
+			local char = LocalPlayer.Character
+			local npc = acharNPC()
+			if not char or not npc then return end
+
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			local target = npc:FindFirstChild("HumanoidRootPart")
+
+			if hrp and target then
+				-- ✅ AGORA VOA AO LADO, NÃO EM CIMA!
+				-- Vector3.new( LADO, ALTURA, FRENTE/TRAS )
+				hrp.CFrame = CFrame.new(target.Position + Vector3.new(6, 2, 0))
+				
+				-- OPCIONAL: Olhar para o NPC
+				hrp.CFrame = CFrame.new(
+					hrp.Position,
+					Vector3.new(target.Position.X, hrp.Position.Y, target.Position.Z)
+				)
+			end
+		end)
+	end
+end)
